@@ -1,2 +1,2 @@
-deploy_settings.py
-local_settings.py
+/deploy_settings.py
+/local_settings.py
