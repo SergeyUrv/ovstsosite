@@ -141,6 +141,6 @@ CKEDITOR_IMAGE_BACKEND = 'pillow'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 try:
-    from .local_settings import *
+    from local_settings import *
 except ImportError:
-    from .deploy_settings import *
+    from deploy_settings import *
