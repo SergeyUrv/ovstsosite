@@ -51,11 +51,11 @@ def get_temp(message):  # получаем температуру
     try:
         item_peop = People.objects.get(id_telegramm=message.from_user.id)
         try:
-            temps = float(message.text)  # проверяем, что температура введена корректно
+            temps = float(re.sub(",", ".", message.text))  # проверяем, что температура введена корректно
             commit_temp(temps=temps, message=message, item_peop=item_peop)
         except Exception:
             bot.send_message(message.from_user.id,
-                             'Цифрами, пожалуйста! Напишите дробное число через точку, например - 36.6')
+                             'Цифрами, пожалуйста! Напишите дробное число, например - 36.6')
             bot.register_next_step_handler(message, get_temp)
     except People.DoesNotExist:
         return start_command
