@@ -4,8 +4,9 @@ from telebot import types
 from mytbot.models import People, Tempa
 import re
 import datetime
+from django.conf import settings
 
-bot = telebot.TeleBot('1949325348:AAHvsy8MwDfJJG1bD1QiuZey_YFYhKZoMCg', parse_mode=None)
+bot = telebot.TeleBot(settings.TELEGRAM_TOKEN_BOT, parse_mode=None)
 
 # @bot.message_handler(content_types=['contact'], func=lambda message: message.chat.id > 0)
 # def get_test(message):
