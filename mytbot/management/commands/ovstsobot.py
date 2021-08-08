@@ -7,17 +7,17 @@ import datetime
 
 bot = telebot.TeleBot('1949325348:AAHvsy8MwDfJJG1bD1QiuZey_YFYhKZoMCg', parse_mode=None)
 
-@bot.message_handler(content_types=['contact'])
-def get_test(message):
-    # Эти параметры для клавиатуры необязательны, просто для удобства
-    # keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    # button_phone = types.KeyboardButton(text="Отправить номер телефона", request_contact=True)
-    # button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
-    # keyboard.add(button_phone, button_geo)
-    # bot.send_message(message.chat.id,
-    #                  "Отправь мне свой номер телефона или поделись местоположением, жалкий человечишка!",
-    #                  reply_markup=keyboard)
-    bot.send_message(message.from_user.id, message.contact.phone_number)
+# @bot.message_handler(content_types=['contact'], func=lambda message: message.chat.id > 0)
+# def get_test(message):
+#     # Эти параметры для клавиатуры необязательны, просто для удобства
+#     # keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+#     # button_phone = types.KeyboardButton(text="Отправить номер телефона", request_contact=True)
+#     # button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
+#     # keyboard.add(button_phone, button_geo)
+#     # bot.send_message(message.chat.id,
+#     #                  "Отправь мне свой номер телефона или поделись местоположением, жалкий человечишка!",
+#     #                  reply_markup=keyboard)
+#     bot.send_message(message.from_user.id, message.contact.phone_number)
 
 ##старт бота
 @bot.message_handler(commands=['start'], func=lambda message: message.chat.id > 0)
@@ -31,7 +31,7 @@ def start_command(message):
         button_phone = types.KeyboardButton(text="Отправить номер телефона", request_contact=True)
         keyboard.add(button_phone)
         bot.send_message(message.chat.id,
-                         "Привет! Я бот отдела взаимодействия с ТСО, чтобы я узнал тебя отправь мне свой номер телефона",
+                         "Привет! Я бот отдела взаимодействия с ТСО, чтобы я узнал тебя отправь мне свой номер телефона нажав на кнопку \"Отправить номер телефона\"",
                          reply_markup=keyboard)
         bot.register_next_step_handler(message, get_phone)
 
@@ -61,20 +61,23 @@ def get_temp(message):  # получаем температуру
         return start_command
 
 #идентификация по номеру телефона
-@bot.message_handler(content_types=['contact'])
+@bot.message_handler(content_types=['contact'], func=lambda message: message.chat.id > 0)
 def get_phone(message):
+    try:
         if message.contact.user_id == message.from_user.id:
             try:
                 ctel=re.sub("^7", "+7", message.contact.phone_number)
                 item = People.objects.get(cont_tel=ctel)
                 item.id_telegramm = message.contact.user_id
                 item.save()
-                bot.send_message(message.from_user.id, "Я узнал тебя! Чтобы узнать что я умею набери /help")
+                bot.send_message(message.from_user.id, "Я узнал тебя! Чтобы узнать что я умею набери /help", reply_markup=types.ReplyKeyboardRemove())
                 bot.register_next_step_handler(message, help_command)
             except People.DoesNotExist:
-                bot.send_message(message.from_user.id, message.contact.phone_number+" - я не узнал тебя! Обратись к администратору бота.")
+                bot.send_message(message.from_user.id, message.contact.phone_number+" - я не узнал тебя! Обратись к администратору бота.", reply_markup=types.ReplyKeyboardRemove())
         else:
             bot.send_message(message.from_user.id, "Это не твой номер телефона, обманывать нехорошо!")
+    except:
+        bot.send_message(message.from_user.id, "Так не пойдёт! Прото нажми кнопку  \"Отправить номер телефона\" или набери /start, чтобы начать всё сначала")
 
 #помощь
 @bot.message_handler(commands=['help'])
