@@ -1,10 +1,13 @@
 from django.core.management.base import BaseCommand
 import telebot
 from telebot import types
-from mytbot.models import People, Tempa
+from mytbot.models import People, Tempa, Kalendar
 import re
 import datetime
 from django.conf import settings
+import schedule
+from threading import Thread
+from time import sleep
 
 bot = telebot.TeleBot(settings.TELEGRAM_TOKEN_BOT, parse_mode=None)
 
@@ -54,6 +57,12 @@ def get_temp(message):  # получаем температуру
         try:
             temps = float(re.sub(",", ".", message.text))  # проверяем, что температура введена корректно
             commit_temp(temps=temps, message=message, item_peop=item_peop)
+            try:
+                # ищем отгул
+                otgul = Kalendar.objects.filter(name=item_peop, day__exact=datetime.date.today()).exclude(type__exact='раб').order_by('-created_date')[:1].get()
+                bot.send_message(message.from_user.id, item_peop.fio_name+', приятно, что в свой ' + otgul.get_type_display() + ' - ' + otgul.comment + ' Вы решили пойти в офис на работу)')
+            except Kalendar.DoesNotExist:
+                pass
         except Exception:
             bot.send_message(message.from_user.id,
                              'Цифрами, пожалуйста! Напишите дробное число, например - 36.6')
@@ -95,35 +104,80 @@ def commit_temp(temps, message, item_peop):
     elif temps > 37:
         bot.send_message(message.chat.id,'Охо-хо: ' + str(temps) + ' это высоковато, может Вам остаться дома сегодня? Свяжитесь с Вашим руководителем по этому вопросу.')
     else:
-        bot.send_message(message.chat.id, "Доброе утро " + item_peop.fio_name + ", твоя температура " + str(temps) + " записана")
+        bot.send_message(message.chat.id, "Доброе утро, " + item_peop.fio_name + ", твоя температура " + str(temps) + " записана.")
+
+#слушаем чат
+@bot.message_handler(content_types=['text'])
+def start(message):
+    temp = re.findall('^Доброе утро.*\s(\d\d.\d)$', message.text)
+    if not temp:
+        temp = re.findall('^\d\d.\d$', message.text)
+    if not temp:
+        temp = re.findall('^Всем привет.*\s(\d\d.\d)$', message.text)
+    if temp:
+        try:
+            item = People.objects.get(id_telegramm=message.from_user.id)
+            temp = re.sub(",", ".", temp[0])
+            commit_temp(temps=float(temp), message=message, item_peop=item)
+            #проверяем в отгуле ли человек
+            try:
+                # ищем отгул
+                otgul = Kalendar.objects.filter(name=item, day__exact=datetime.date.today()).exclude(type__exact='раб').order_by('-created_date')[:1].get()
+                bot.send_message(message.chat.id, item.fio_name+', приятно, что в свой ' + otgul.get_type_display() + ' ' + otgul.comment + ' Вы решили пойти в офис на работу)')
+            except Kalendar.DoesNotExist:
+                pass
+            check_otgul_zavtra(message=message, p=item)
+        except People.DoesNotExist:
+            bot.send_message(message.chat.id, "Чтобы писать тут свою температуру зарегитрируйтесь в боте @OVsTSO_bot")
+    # elif message.text == '/help':
+    #     bot.send_message(message.from_user.id, "Комманды: /help - все команды бота \n"
+    #                                            "/temp - передать температуру")
+    # elif message.text == '/test':
+    #     bot.send_message(message.from_user.id, "номер телефона")
+    #     bot.register_next_step_handler(message, get_test)
+    # elif message.text == '/temp':
+    #     bot.send_message(message.from_user.id, "Какая температура тела у Вас сегодня?")
+    #     bot.register_next_step_handler(message, get_temp)  # следующий шаг – функция get_name
+    # else:
+    #     bot.send_message(message.from_user.id, 'Напиши /help')
+
+def check_otgul_zavtra(message,p):
+    msg=''
+    try:
+        #ищем отгул
+        if datetime.date.today().weekday()==4:
+            otgul=Kalendar.objects.filter(name=p, day__exact=(datetime.date.today()+datetime.timedelta(days=3))).order_by('-created_date')[:1].get()
+            msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, в понедельник у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
+            bot.send_message(message.chat.id, msg)
+        else:
+            otgul=Kalendar.objects.filter(name=p, day__exact=(datetime.date.today()+datetime.timedelta(days=1))).order_by('-created_date')[:1].get()
+            msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, завтра у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
+            bot.send_message(message.chat.id, msg)
+    except Kalendar.DoesNotExist:
+        pass
+
+
+###### планировщик заданий бота
+some_id=477234400
+def schedule_checker():
+    while True:
+        schedule.run_pending()
+        sleep(1)
+
+def function_to_run():
+    return bot.send_message(some_id, "This is a message to send.")
+
+
+# Create the job in schedule.
+#schedule.every(15).seconds.do(function_to_run)
+
+# Spin up a thread to run the schedule check so it doesn't block your bot.
+# This will take the function schedule_checker which will check every second
+# to see if the scheduled job needs to be ran.
+#Thread(target=schedule_checker).start()
+
 
 class Command(BaseCommand):
-
-    #слушаем чат
-    @bot.message_handler(content_types=['text'])
-    def start(message):
-        temp = re.findall('^Доброе утро.*\s(\d\d.\d)$', message.text)
-        if not temp:
-            temp = re.findall('^\d\d.\d$', message.text)
-        if temp:
-            try:
-                item = People.objects.get(id_telegramm=message.from_user.id)
-                temp = re.sub(",", ".", temp[0])
-                commit_temp(temps=float(temp), message=message, item_peop=item)
-            except People.DoesNotExist:
-                bot.send_message(message.chat.id, "Чтобы писать тут свою температуру зарегитрируйтесь в боте @OVsTSO_bot")
-        # elif message.text == '/help':
-        #     bot.send_message(message.from_user.id, "Комманды: /help - все команды бота \n"
-        #                                            "/temp - передать температуру")
-        # elif message.text == '/test':
-        #     bot.send_message(message.from_user.id, "номер телефона")
-        #     bot.register_next_step_handler(message, get_test)
-        elif message.text == '/temp':
-            bot.send_message(message.from_user.id, "Какая температура тела у Вас сегодня?")
-            bot.register_next_step_handler(message, get_temp)  # следующий шаг – функция get_name
-        # else:
-        #     bot.send_message(message.from_user.id, 'Напиши /help')
-
 
 
     def get_age(message):

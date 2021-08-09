@@ -32,3 +32,15 @@ class Tempa(models.Model):
 
     def __str__(self):
         return self.sname.fio_sname+" - "+str(self.temp)
+
+class Kalendar(models.Model):
+    name = models.ForeignKey(People, blank=False, null=True, related_name='sotr_name', on_delete=models.RESTRICT, verbose_name='Сотрудник')
+    day = models.DateField(blank=False, null=True, verbose_name='Дата')
+    type = models.CharField(max_length=3, blank=False, null=True, choices=[('отп','Отпуск'),
+                                                                           ('отг','Отгул'),
+                                                                           ('раб','Рабочий день по приказу')],
+                            verbose_name='Тип дня')
+    comment = models.TextField(max_length=50, blank=True, null=False, verbose_name='Коментарий')
+    created_date = models.DateTimeField(default=timezone.now)
+    def __str__(self):
+        return str(self.day)+' '+self.name.fio_sname+' - '+self.type
