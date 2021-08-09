@@ -93,7 +93,6 @@ def get_phone(message):
 @bot.message_handler(commands=['help'])
 def help_command(message):
         bot.send_message(message.from_user.id, "Команды бота: /help - все команды бота \n"
-                                               "/temp - передать температуру\n"
                                                "/report - отчет по температуре за сегодня")
 #функция сохранения температуры
 def commit_temp(temps, message, item_peop):
