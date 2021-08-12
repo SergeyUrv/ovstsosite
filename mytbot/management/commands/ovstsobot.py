@@ -52,7 +52,7 @@ def temp_view(message):
                 otgul = Kalendar.objects.filter(name=p, day__lte=datetime.date.today(),
                                                 day_end__gte=datetime.date.today()).exclude(type__exact='раб').order_by(
                     '-created_date')[:1].get()
-                ptemp = otgul.get_type_display() + ' ' + otgul.comment
+                ptemp = '- ' + otgul.get_type_display() + ' (' + otgul.comment + ')'
             except Kalendar.DoesNotExist:
                 ptemp = '-'
         msg = msg+p.fio_sname+' '+str(ptemp)+"\n"
