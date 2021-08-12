@@ -35,7 +35,8 @@ class Tempa(models.Model):
 
 class Kalendar(models.Model):
     name = models.ForeignKey(People, blank=False, null=True, related_name='sotr_name', on_delete=models.RESTRICT, verbose_name='Сотрудник')
-    day = models.DateField(blank=False, null=True, verbose_name='Дата')
+    day = models.DateField(blank=False, null=True, verbose_name='Дата начала')
+    day_end = models.DateField(blank=False, null=True, verbose_name='Дата окончания')
     type = models.CharField(max_length=3, blank=False, null=True, choices=[('отп','Отпуск'),
                                                                            ('отг','Отгул'),
                                                                            ('раб','Рабочий день по приказу')],
@@ -44,3 +45,23 @@ class Kalendar(models.Model):
     created_date = models.DateTimeField(default=timezone.now)
     def __str__(self):
         return str(self.day)+' '+self.name.fio_sname+' - '+self.type
+
+class Vakcina(models.Model):
+    name = models.ForeignKey(People, blank=False, null=True, related_name='sotr_cert_name', on_delete=models.RESTRICT,
+                             verbose_name='Сотрудник')
+    etap_1 = models.DateField(blank=False, null=True, verbose_name='1-й этап вакцины')
+    etap_2 = models.DateField(blank=False, null=True, verbose_name='2-й этап вакцины')
+    medotvod = models.DateField(blank=False, null=True, verbose_name='Медотвод')
+    covid_cert = models.DateField(blank=False, null=True, verbose_name='Сертификат переболевшего COVID')
+    bl_covid = models.DateField(blank=False, null=True, verbose_name='Болеет COVID')
+    srok_deystvia = models.DateField(blank=False, null=True, verbose_name='Срок действия сертификата/медотвода')
+    cert = models.FileField(blank=True, verbose_name='Сертификат')
+    created_date = models.DateTimeField(default=timezone.now, verbose_name='Дата создания записи')
+    published_date = models.DateTimeField(default=timezone.now, verbose_name='Дата изменения записи')
+
+    def __str__(self):
+        return str(self.srok_deystvia)+' '+self.name.fio_sname
+
+    def publish(self):
+        self.published_date = timezone.now()
+        self.save()

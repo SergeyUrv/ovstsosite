@@ -8,6 +8,7 @@ from django.conf import settings
 import schedule
 from threading import Thread
 from time import sleep
+import pandas as pd
 
 bot = telebot.TeleBot(settings.TELEGRAM_TOKEN_BOT, parse_mode=None)
 
@@ -50,6 +51,11 @@ def temp_view(message):
             ptemp = '-'
         msg = msg+p.fio_sname+' '+str(ptemp)+"\n"
     bot.send_message(message.chat.id,msg)
+
+# @bot.message_handler(commands=['otchet'])
+# def otchet(message):
+#     get_otchet()
+#     bot.send_message(message.chat.id, 'Готово!')
 
 def get_temp(message):  # получаем температуру
     try:
@@ -121,7 +127,7 @@ def start(message):
             #проверяем в отгуле ли человек
             try:
                 # ищем отгул
-                otgul = Kalendar.objects.filter(name=item, day__exact=datetime.date.today()).exclude(type__exact='раб').order_by('-created_date')[:1].get()
+                otgul = Kalendar.objects.filter(name=item, day__lte=datetime.date.today(), day_end__gte=datetime.date.today()).exclude(type__exact='раб').order_by('-created_date')[:1].get()
                 bot.send_message(message.chat.id, item.fio_name+', приятно, что в свой ' + otgul.get_type_display() + ' ' + otgul.comment + ' Вы решили пойти в офис на работу)')
             except Kalendar.DoesNotExist:
                 pass
@@ -143,17 +149,28 @@ def start(message):
 def check_otgul_zavtra(message,p):
     msg=''
     try:
-        #ищем отгул
+        #ищем отгул или отпуск
         if datetime.date.today().weekday()==4:
-            otgul=Kalendar.objects.filter(name=p, day__exact=(datetime.date.today()+datetime.timedelta(days=3))).order_by('-created_date')[:1].get()
-            msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, в понедельник у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
-            bot.send_message(message.chat.id, msg)
+            otgul=Kalendar.objects.filter(name=p, day__lte=(datetime.date.today()+datetime.timedelta(days=3)), day_end__gte=(datetime.date.today()+datetime.timedelta(days=3))).order_by('-created_date')[:1].get()
+            if otgul.day != otgul.day_end:
+                msg = p.fio_name + ' ' + p.fio_lname + ', спешу напомнить, у Вас с '+ otgul.day.strftime("%d.%m.%Y")+' ' + otgul.get_type_display() + ' (' + otgul.comment + ') до ' + otgul.day_end.strftime("%d.%m.%Y")
+            else:
+                msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, в понедельник у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
         else:
-            otgul=Kalendar.objects.filter(name=p, day__exact=(datetime.date.today()+datetime.timedelta(days=1))).order_by('-created_date')[:1].get()
-            msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, завтра у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
-            bot.send_message(message.chat.id, msg)
+            otgul=Kalendar.objects.filter(name=p,  day__lte=(datetime.date.today()+datetime.timedelta(days=1)), day_end__gte=(datetime.date.today()+datetime.timedelta(days=1))).order_by('-created_date')[:1].get()
+            if otgul.day != otgul.day_end:
+                msg = p.fio_name + ' ' + p.fio_lname + ', спешу напомнить, у Вас с '+ otgul.day.strftime("%d.%m.%Y") +' ' + otgul.get_type_display() + ' (' + otgul.comment + ') до ' + otgul.day_end.strftime("%d.%m.%Y")
+            else:
+                msg=p.fio_name+' '+ p.fio_lname +', спешу напомнить, завтра у Вас '+ otgul.get_type_display() + ' (' + otgul.comment + ')'
+        bot.send_message(message.chat.id, msg)
     except Kalendar.DoesNotExist:
         pass
+
+# def get_otchet():
+#     p=People.objects.all()
+#     ptemp = Tempa.objects.filter(created_date__gte=datetime.date.today())
+#     df = pd.DataFrame(list(ptemp))
+#     df.to_excel("output.xlsx", index=False)
 
 
 ###### планировщик заданий бота
