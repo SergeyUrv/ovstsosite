@@ -48,7 +48,13 @@ def temp_view(message):
             #ищем последнюю внесенную температуру
             ptemp=Tempa.objects.filter(sname=p, created_date__gte=datetime.date.today()).order_by('-created_date')[:1].get().temp
         except Tempa.DoesNotExist:
-            ptemp = '-'
+            try:
+                otgul = Kalendar.objects.filter(name=p, day__lte=datetime.date.today(),
+                                                day_end__gte=datetime.date.today()).exclude(type__exact='раб').order_by(
+                    '-created_date')[:1].get()
+                ptemp = otgul.get_type_display() + ' ' + otgul.comment
+            except Kalendar.DoesNotExist:
+                ptemp = '-'
         msg = msg+p.fio_sname+' '+str(ptemp)+"\n"
     bot.send_message(message.chat.id,msg)
 
