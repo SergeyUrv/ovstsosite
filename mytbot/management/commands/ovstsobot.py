@@ -189,7 +189,7 @@ def get_otchet():
 def get_otpusk(message):
     try:
         p = People.objects.get(id_telegramm=message.from_user.id)
-        otgul_massiv = Kalendar.objects.filter(name=p, day__gt=datetime.date.today()).order_by('-day')
+        otgul_massiv = Kalendar.objects.filter(name=p, day__gt=datetime.date.today()).order_by('day')
         if otgul_massiv:
             msg = p.fio_name + ' ' + p.fio_lname + ', вот Ваши дни отдыха в ближайшее время:\n'
             print(otgul_massiv)
