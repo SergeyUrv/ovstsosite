@@ -63,6 +63,11 @@ def temp_view(message):
 #     get_otchet()
 #     bot.send_message(message.chat.id, 'Готово!')
 
+@bot.message_handler(commands=['relax'])
+def otchet(message):
+    get_otpusk(message)
+    # bot.send_message(message.chat.id, 'Готово!')
+
 def get_temp(message):  # получаем температуру
     try:
         item_peop = People.objects.get(id_telegramm=message.from_user.id)
@@ -172,12 +177,32 @@ def check_otgul_zavtra(message,p):
     except Kalendar.DoesNotExist:
         pass
 
-# def get_otchet():
-#     p=People.objects.all()
-#     ptemp = Tempa.objects.filter(created_date__gte=datetime.date.today())
-#     df = pd.DataFrame(list(ptemp))
-#     df.to_excel("output.xlsx", index=False)
+def get_otchet():
+    # p=People.objects.all()
+    # ptemp = Tempa.objects.filter(created_date__gte=datetime.date.today()).order_by('-_created_date')[0]
+    # p=p.filter(tempa__created_date__gte=datetime.date.today()).order_by('-tempa__created_date').get()
+    temp=datetime.date.today()
+    p=People.objects.raw('SELECT fio_sname FROM mytbot_people LEFT OUTER JOIN mytbot_tempa ON mytbot_people.id=mytbot_tempa.sname_id WHERE mytbot_tempa.temp = %s', [temp])
+    df = pd.DataFrame(list(p))
+    df.to_excel("output.xlsx", index=False)
 
+def get_otpusk(message):
+    try:
+        p = People.objects.get(id_telegramm=message.from_user.id)
+        otgul_massiv = Kalendar.objects.filter(name=p, day__gt=datetime.date.today()).order_by('-day')
+        if otgul_massiv:
+            msg = p.fio_name + ' ' + p.fio_lname + ', вот Ваши дни отдыха в ближайшее время:\n'
+            print(otgul_massiv)
+            for otgul in otgul_massiv:
+                if otgul.day != otgul.day_end:
+                    msg = msg + 'с ' + otgul.day.strftime("%d.%m.%Y") + ' ' + otgul.get_type_display() + ' (' + otgul.comment + ') до ' + otgul.day_end.strftime("%d.%m.%Y")+'\n'
+                else:
+                    msg = msg + otgul.day.strftime("%d.%m.%Y") + ' ' + otgul.get_type_display() + ' (' + otgul.comment + ')\n'
+        else:
+            msg = p.fio_name + ' ' + p.fio_lname + ' к сожаленияю, у Вас в ближайшее время нет отгулов и отпусков'
+    except People.DoesNotExist:
+        msg = 'Эммм... Мы не знакомы, зарегитрируйтесь в боте @OVsTSO_bot, потом поговорим'
+    return bot.send_message(message.chat.id, msg)
 
 ###### планировщик заданий бота
 some_id=477234400
