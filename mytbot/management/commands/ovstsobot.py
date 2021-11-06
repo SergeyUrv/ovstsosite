@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 import telebot
 from telebot import types
-from mytbot.models import People, Tempa, Kalendar
+from mytbot.models import People, Tempa, Kalendar, Vakcina
 import re
 import datetime
 from django.conf import settings
@@ -58,14 +58,34 @@ def temp_view(message):
         msg = msg+p.fio_sname+' '+str(ptemp)+"\n"
     bot.send_message(message.chat.id,msg)
 
-# @bot.message_handler(commands=['otchet'])
-# def otchet(message):
-#     get_otchet()
-#     bot.send_message(message.chat.id, 'Готово!')
+@bot.message_handler(commands=['vak_all'])
+def temp_view(message):
+    msg = 'ОВсТСО:\nОтчет по действию сертификатов. \n'
+    for v in Vakcina.objects.all():
+        if v.etap_2:
+            type='вакцинирован до'
+        elif v.medotvod:
+            type = 'медотвод до'
+        elif v.covid_cert:
+            type= 'сертификат переболевшего до'
+        elif v.bl_covid:
+            type= 'болеет covid в настоящее время'
+        else:
+            type='нет сертификата'
+        if type!='нет сертификата':
+            msg = msg + v.name.fio_sname + ' - ' + type + ' ' + v.srok_deystvia.strftime("%d.%m.%Y") + "\n"
+        else:
+            msg = msg + v.name.fio_sname + ' - ' + type + "\n"
+    bot.send_message(message.chat.id,msg)
 
 @bot.message_handler(commands=['relax'])
 def otchet(message):
     get_otpusk(message)
+    # bot.send_message(message.chat.id, 'Готово!')
+
+@bot.message_handler(commands=['vakcina'])
+def vak_view(message):
+    get_vakcina(message)
     # bot.send_message(message.chat.id, 'Готово!')
 
 def get_temp(message):  # получаем температуру
@@ -187,6 +207,7 @@ def get_otchet():
     df = pd.DataFrame(list(p))
     df.to_excel("output.xlsx", index=False)
 
+#функция вывода отпусков
 def get_otpusk(message):
     try:
         p = People.objects.get(id_telegramm=message.from_user.id)
@@ -201,6 +222,23 @@ def get_otpusk(message):
                     msg = msg + otgul.day.strftime("%d.%m.%Y") + ' ' + otgul.get_type_display() + ' (' + otgul.comment + ')\n'
         else:
             msg = p.fio_name + ' ' + p.fio_lname + ' к сожаленияю, у Вас в ближайшее время нет отгулов и отпусков'
+    except People.DoesNotExist:
+        msg = 'Эммм... Мы не знакомы, зарегитрируйтесь в боте @OVsTSO_bot, потом поговорим'
+    return bot.send_message(message.chat.id, msg)
+
+#функция вывода окончания сертификатов
+def get_vakcina(message):
+    try:
+        p = People.objects.get(id_telegramm=message.from_user.id)
+        try:
+            srok_deystvia = Vakcina.objects.filter(name=p).order_by('srok_deystvia')[:1].get()
+            print(srok_deystvia)
+            if srok_deystvia:
+                msg = p.fio_name + ' ' + p.fio_lname + ', Ваш сертификат заканчивается: ' + srok_deystvia.srok_deystvia.strftime("%d.%m.%Y")
+            else:
+                msg = p.fio_name + ' ' + p.fio_lname + ', у меня нет информации о Вашем сертификате'
+        except Vakcina.DoesNotExist:
+            msg = p.fio_name + ' ' + p.fio_lname + ', у меня нет информации о Вашем сертификате'
     except People.DoesNotExist:
         msg = 'Эммм... Мы не знакомы, зарегитрируйтесь в боте @OVsTSO_bot, потом поговорим'
     return bot.send_message(message.chat.id, msg)
