@@ -65,3 +65,12 @@ class Vakcina(models.Model):
     def publish(self):
         self.published_date = timezone.now()
         self.save()
+
+
+class Coffee(models.Model):
+    name = models.ForeignKey(People, blank=False, null=True, related_name='coffee_sotr_name', on_delete=models.RESTRICT, verbose_name='Сотрудник')
+    lastday = models.DateField(blank=False, null=True, verbose_name='Дата последнего дежурства')
+    kolvo = models.IntegerField(blank=False, null=True, verbose_name='Количество отдежуренных дней')
+    created_date = models.DateTimeField(default=timezone.now)
+    def __str__(self):
+        return str(self.day)+' '+self.name.fio_sname+' - '+self.type
