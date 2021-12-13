@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import People, Tempa, Kalendar
+import datetime
 
 # Create your views here.
 
