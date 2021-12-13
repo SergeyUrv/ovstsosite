@@ -7,6 +7,8 @@ import datetime
 
 def get_temp(request):
     j = {}
+    j['fio_temp']={}
+    j['fio_prim']={}
     for p in People.objects.all():
         try:
             #ищем последнюю внесенную температуру
@@ -20,7 +22,7 @@ def get_temp(request):
                 comment = otgul.comment
             except Kalendar.DoesNotExist:
                 ptemp = '-'
-        j['fio_temp'][p.fio_sname] = str(ptemp)
-        j['fio_prim'][p.fio_sname] = comment
+        j['fio_temp'][str(p.fio_sname)] = str(ptemp)
+        j['fio_prim'][str(p.fio_sname)] = str(comment)
     j['result'] = 'ok'
     return JsonResponse(j)
