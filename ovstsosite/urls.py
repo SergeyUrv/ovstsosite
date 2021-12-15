@@ -21,4 +21,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('valera/', include('mytbot.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]# + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#
+# if settings.DEBUG:
+#     urlpatterns += static(settings.FILES_URL, document_root=settings.FILES_ROOT)
