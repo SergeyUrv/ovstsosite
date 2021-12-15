@@ -7,10 +7,10 @@ import datetime
 
 def get_temp(request):
     j = {}
-    j['fio_temp']={}
-    j['fio_prim']={}
+    j['fio_temp'] = {}
+    j['fio_prim'] = {}
     for p in People.objects.all():
-        comment=''
+        comment = ''
         try:
             #ищем последнюю внесенную температуру
             ptemp=Tempa.objects.filter(sname=p, created_date__gte=datetime.date.today()).order_by('-created_date')[:1].get().temp

@@ -42,6 +42,9 @@ class Kalendar(models.Model):
                                                                            ('раб','Рабочий день по приказу')],
                             verbose_name='Тип дня')
     comment = models.TextField(max_length=50, blank=True, null=False, verbose_name='Коментарий')
+    fakt = models.BooleanField(default=True, null=True, verbose_name='Официальная дата совпадает с фактической датой')
+    day_fakt = models.DateField(blank=True, null=True, verbose_name='Фактическая дата начала')
+    day_end_fakt = models.DateField(blank=True, null=True, verbose_name='Фактическая дата окончания')
     created_date = models.DateTimeField(default=timezone.now)
     def __str__(self):
         return str(self.day)+' '+self.name.fio_sname+' - '+self.type
