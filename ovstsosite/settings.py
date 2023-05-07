@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'mytbot',
+    'iiwork',
+    'import_export',
 ]
 
 MIDDLEWARE = [
