@@ -36,7 +36,10 @@ class Tochki_ishodnik(models.Model):
     oesk_class = models.CharField(max_length=128, verbose_name="Признак по классификатору ОЭСК")
     eo_num  = models.CharField(max_length=18, verbose_name="Номер энергообъекта")
     eo_name = models.CharField(max_length=512, verbose_name="Наименование энергообъекта")
-
+    eo_id = models.CharField(max_length=10, verbose_name="ID ЭО")
+    tp_id = models.CharField(max_length=10, verbose_name="ID ТП")
+    grbp = models.CharField(max_length=512, verbose_name="Место (точка) РБП")
+    so = models.CharField(max_length=128, verbose_name="Сетевая организация (ТП)")
     tu_id = models.CharField(max_length=10, verbose_name="ID ТУ")
     tu_name = models.CharField(max_length=512, verbose_name="Наименование ТУ")
     tu_power = models.FloatField(verbose_name='Мощность ТУ')
@@ -58,6 +61,10 @@ class Tochki_ishodnik(models.Model):
     tu_num = models.IntegerField(verbose_name='Номер ТУ')
     ck = models.IntegerField(verbose_name='ЦК', blank=True, null=True)
     ppn_category = models.CharField(max_length=128, verbose_name="Категория ППН")
+    tarif_name = models.CharField(max_length=128, verbose_name="Наименование тарифа")
+    tranzit_golova_tu = models.CharField(max_length=64, verbose_name="Номер транзитной ТУ на голове")
+    tranzit_golova_eo = models.CharField(max_length=18, verbose_name="Номер энергообъекта головного потребителя")
+    tranzit_golova_tu = models.IntegerField(verbose_name='Номер ТУ головного потребителя')
 
     created_date = models.DateTimeField(default=timezone.now)
 
